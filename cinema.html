@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>CineTech | Premium Backoffice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="cinema.css" />
+</head>
+
+<body>
+    <div class="app-background"></div>
+    <div class="glass-overlay"></div>
+
+    <div class="layout">
+
+        <nav class="sidebar hidden" id="main-sidebar">
+            <div class="user-info">
+                <span id="display-username"></span>
+                <span id="display-role"></span>
+            </div>
+            <h2>CineTech</h2>
+            <button onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button onclick="showSection('films')">🎬 Films</button>
+            <button onclick="showSection('directors')" class="admin-only">🎥 Directors</button>
+            <button onclick="showSection('actors')" class="admin-only">👥 Actors</button>
+            <button onclick="showSection('cinemas')">🏛️ Cinemas</button>
+            <button onclick="showSection('bookings')" class="user-only">🎫 My Bookings</button>
+            <button onclick="logout()" class="logout-btn">� Logout</button>
+        </nav>
+
+
+        <main class="content">
+
+            <section id="login-section">
+                <div class="login-card">
+                    <h1>CineTech Login</h1>
+                    <form id="login-form">
+                        <input type="text" id="login-username" placeholder="Username" required />
+                        <div class="password-wrapper">
+                            <input type="password" id="login-password" placeholder="Password" required />
+                            <span id="toggle-password-trigger" class="password-trigger">SHOW</span>
+                        </div>
+                        <select id="login-role" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="utilisateur">Utilisateur</option>
+                        </select>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p class="login-hint">Demo: admin/admin or user/user</p>
+                </div>
+            </section>
+
+
+            <section id="dashboard-section" class="hidden">
+                <h1>Dashboard</h1>
+                <div id="kpi-grid" class="kpi-grid"></div>
+            </section>
+
+
+
+            <section id="films-section" class="hidden">
+                <h1 id="films-header">Films Management</h1>
+
+                <form id="film-form" class="admin-only">
+                    <input type="hidden" id="film-id" />
+
+                    <input type="text" id="title" placeholder="Title" required />
+
+                    <select id="genre" required>
+                        <option value="">Genre</option>
+                        <option>Action</option>
+                        <option>Drama</option>
+                        <option>Comedy</option>
+                        <option>Sci-Fi</option>
+                    </select>
+
+                    <input type="number" id="releaseDate" placeholder="Year" min="1900" max="2100" required />
+
+
+                    <div id="rating-stars">
+                        <input type="hidden" id="rating" required />
+
+                        <span data-value="1">★</span>
+                        <span data-value="2">★</span>
+                        <span data-value="3">★</span>
+                        <span data-value="4">★</span>
+                        <span data-value="5">★</span>
+                    </div>
+
+                    <select id="film-director">
+                        <option value="">No Director</option>
+                    </select>
+
+                    <button type="submit">Save Film</button>
+                </form>
+
+                <form id="user-film-search-form" class="user-only search-bar-top">
+                    <input type="text" id="user-search-input" placeholder="Search by title, genre..."
+                        list="films-suggestions" />
+                    <datalist id="films-suggestions"></datalist>
+                    <button type="submit">Search</button>
+                </form>
+
+
+                <div class="filter-bar">
+                    <select id="film-sort">
+                        <option value="">Sort by</option>
+                        <option value="title-asc">Title (A-Z)</option>
+                        <option value="title-desc">Title (Z-A)</option>
+                        <option value="rating-desc">Rating (Highest)</option>
+                        <option value="rating-asc">Rating (Lowest)</option>
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                    </select>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Genre</th>
+                            <th>Year</th>
+                            <th>Rating</th>
+                            <th>Director</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="films-table"></tbody>
+                </table>
+            </section>
+
+
+            <section id="directors-section" class="hidden">
+                <h1>Directors Management</h1>
+
+                <form id="director-form" class="admin-only">
+                    <input type="hidden" id="director-id" />
+                    <input type="text" id="director-name" placeholder="Name" required />
+                    <input type="text" id="nationality" placeholder="Nationality" required />
+                    <button type="submit">Save Director</button>
+                </form>
+
+                <div id="directors-list"></div>
+            </section>
+
+            <section id="actors-section" class="hidden">
+                <h1>Actors Management</h1>
+                <form id="actor-form" class="admin-only">
+                    <input type="hidden" id="actor-id" />
+                    <input type="text" id="actor-name" placeholder="Name" required />
+                    <input type="text" id="actor-bio" placeholder="Biography" required />
+                    <input type="date" id="actor-dob" placeholder="DOB" required />
+                    <button type="submit">Save Actor</button>
+                </form>
+                <div id="actors-list"></div>
+            </section>
+
+            <section id="cinemas-section" class="hidden">
+                <h1 id="cinemas-header">Cinemas Management</h1>
+                <form id="cinema-form" class="admin-only">
+                    <input type="hidden" id="cinema-id" />
+                    <input type="text" id="cinema-name" placeholder="Name" required />
+                    <input type="text" id="cinema-location" placeholder="Location" required />
+                    <input type="number" id="cinema-capacity" placeholder="Capacity" required />
+                    <button type="submit">Save Cinema</button>
+                </form>
+
+                <form id="user-cinema-search-form" class="user-only search-bar-top">
+                    <input type="text" id="user-cinema-search-input" placeholder="Search by name, location..."
+                        list="cinemas-suggestions" />
+                    <datalist id="cinemas-suggestions"></datalist>
+                    <button type="submit">Search</button>
+                </form>
+                <div id="cinemas-list"></div>
+            </section>
+
+            <section id="bookings-section" class="hidden">
+                <h1>My Bookings</h1>
+                <form id="booking-form">
+                    <input type="hidden" id="booking-id" />
+                    <select id="booking-film" required>
+                        <option value="">Select Film</option>
+                    </select>
+                    <select id="booking-cinema" required>
+                        <option value="">Select Cinema</option>
+                    </select>
+                    <input type="date" id="booking-date" required />
+                    <input type="number" id="booking-seats" placeholder="Seats" min="1" required />
+                    <button type="submit">Confirm Booking</button>
+                </form>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Film</th>
+                            <th>Cinema</th>
+                            <th>Date</th>
+                            <th>Seats</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookings-table"></tbody>
+                </table>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="cinema.js"></script>
+</body>
+
+</html>
