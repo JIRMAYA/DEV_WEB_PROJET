@@ -25,7 +25,6 @@
             <button onclick="showSection('dashboard')">📊 Dashboard</button>
             <button onclick="showSection('films')">🎬 Films</button>
             <button onclick="showSection('directors')" class="admin-only">🎥 Directors</button>
-            <button onclick="showSection('actors')" class="admin-only">👥 Actors</button>
             <button onclick="showSection('cinemas')">🏛️ Cinemas</button>
             <button onclick="showSection('bookings')" class="user-only">🎫 My Bookings</button>
             <button onclick="logout()" class="logout-btn">� Logout</button>
@@ -58,6 +57,7 @@
             <section id="dashboard-section" class="hidden">
                 <h1>Dashboard</h1>
                 <div id="kpi-grid" class="kpi-grid"></div>
+                <canvas id="ratingsChart" height="120"></canvas>
             </section>
 
 
@@ -147,18 +147,6 @@
                 <div id="directors-list"></div>
             </section>
 
-            <section id="actors-section" class="hidden">
-                <h1>Actors Management</h1>
-                <form id="actor-form" class="admin-only">
-                    <input type="hidden" id="actor-id" />
-                    <input type="text" id="actor-name" placeholder="Name" required />
-                    <input type="text" id="actor-bio" placeholder="Biography" required />
-                    <input type="date" id="actor-dob" placeholder="DOB" required />
-                    <button type="submit">Save Actor</button>
-                </form>
-                <div id="actors-list"></div>
-            </section>
-
             <section id="cinemas-section" class="hidden">
                 <h1 id="cinemas-header">Cinemas Management</h1>
                 <form id="cinema-form" class="admin-only">
@@ -208,7 +196,7 @@
 
         </main>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="cinema.js"></script>
 </body>
 

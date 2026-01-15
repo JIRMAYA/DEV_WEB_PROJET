@@ -1,0 +1,24 @@
+{
+  "name": "dev_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cinema.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JIRMAYA/DEV_WEB_PROJET.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JIRMAYA/DEV_WEB_PROJET/issues"
+  },
+  "homepage": "https://github.com/JIRMAYA/DEV_WEB_PROJET#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

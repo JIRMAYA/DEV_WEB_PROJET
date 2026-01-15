@@ -1,6 +1,5 @@
-/* =========================
-   LOCAL STORAGE UTILITIES
-========================= */
+// LOCAL STORAGE UTILITIES
+
 function getData(key) {
     return JSON.parse(localStorage.getItem(key)) || [];
 }
@@ -9,11 +8,36 @@ function setData(key, data) {
     localStorage.setItem(key, JSON.stringify(data));
 }
 
-/* =========================
-   NAVIGATION (SPA)
-========================= */
+const OMDB_API_KEY = "1152eaef";
+
+async function enrichFilmsFromOMDb() {
+    for (let film of films) {
+        if (film.imdbRating !== undefined) continue;
+
+        try {
+            const res = await fetch(
+              `http://localhost:3000/omdb?t=${encodeURIComponent(film.title)}`
+            );
+            const data = await res.json();
+
+            if (data.Response === "True") {
+                film.imdbRating = parseFloat(data.imdbRating);
+                film.poster = data.Poster;
+                film.omdbYear = data.Year;
+            } else {
+                film.imdbRating = 0;
+            }
+        } catch (err) {
+            console.error("OMDb fetch failed", err);
+        }
+    }
+
+    setData("films", films);
+}
+
+   // NAVIGATION (SPA)
 function showSection(section) {
-    const sections = ["login-section", "dashboard-section", "films-section", "directors-section", "actors-section", "cinemas-section", "bookings-section"];
+    const sections = ["login-section", "dashboard-section", "films-section", "directors-section", "cinemas-section", "bookings-section"];
     sections.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.add("hidden");
@@ -23,10 +47,13 @@ function showSection(section) {
     if (activeSection) activeSection.classList.remove("hidden");
 
     if (section === 'dashboard') {
+    (async () => {
+        await enrichFilmsFromOMDb();
         renderDashboard();
-    }
+    })();
+}
 
-    // Update active button styling
+    // Update active 
     const buttons = document.querySelectorAll(".sidebar button");
     buttons.forEach(btn => {
         const btnSection = btn.getAttribute("onclick")?.match(/'([^']+)'/)?.[1];
@@ -48,19 +75,17 @@ function showSection(section) {
     }
 }
 
-/* =========================
-   GLOBAL DATA
-========================= */
+   //GLOBAL DATA
+
 let films = getData("films");
 let directors = getData("directors");
-let actors = getData("actors");
 let cinemas = getData("cinemas");
 let bookings = getData("bookings");
 let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
 
-/* =========================
-   AUTHENTICATION
-========================= */
+
+   //AUTHENTICATION
+
 const loginForm = document.getElementById("login-form");
 
 function checkAuth() {
@@ -104,7 +129,7 @@ function checkAuth() {
     }
 }
 
-/* ---- Password Security Functions ---- */
+// Password Security Functions
 async function hashPassword7Times(password) {
     let currentHash = password;
     const encoder = new TextEncoder();
@@ -136,17 +161,14 @@ loginForm.addEventListener("submit", async (e) => {
     const password = loginPasswordInput.value;
     const role = document.getElementById("login-role").value;
 
-    // Hash password 7 times
     const hashedPassword = await hashPassword7Times(password);
     console.log("Password hashed (7 iterations):", hashedPassword);
 
-    // Simple mock auth
     currentUser = { username, role };
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-    // Clear login form
     loginForm.reset();
-    loginPasswordInput.type = "password"; // Reset type
+    loginPasswordInput.type = "password"; 
 
     checkAuth();
 });
@@ -157,15 +179,13 @@ function logout() {
     location.reload();
 }
 
-/* =========================
-   MODULE 1 — FILMS
-========================= */
+   //MODULE 1 — FILMS
+
 const filmForm = document.getElementById("film-form");
 const filmsTable = document.getElementById("films-table");
 const filmDirectorSelect = document.getElementById("film-director");
 const filmSort = document.getElementById("film-sort");
 
-/* ---- Rating stars UI ---- */
 const ratingInput = document.getElementById("rating");
 const ratingStars = document.querySelectorAll("#rating-stars span");
 
@@ -180,7 +200,7 @@ ratingStars.forEach(star => {
     });
 });
 
-/* ---- Populate Director select in Film form ---- */
+//Populate Director select in Film form
 function renderFilmDirectorOptions() {
     filmDirectorSelect.innerHTML = `<option value="">No Director</option>`;
     directors.forEach(d => {
@@ -188,7 +208,7 @@ function renderFilmDirectorOptions() {
     });
 }
 
-/* ---- Render Films Table ---- */
+//Render Films Table
 function renderFilms(list = films) {
     filmsTable.innerHTML = "";
 
@@ -197,24 +217,32 @@ function renderFilms(list = films) {
 
         const stars = "★".repeat(film.rating).padEnd(5, "☆");
 
+       const isImdb = film.imdbOnly;
+
         filmsTable.innerHTML += `
-      <tr>
-        <td>${film.title}</td>
-        <td>${film.genre}</td>
-        <td>${film.releaseDate}</td>
-        <td>${stars}</td>
-        <td>${director ? director.name : "-"}</td>
-        <td>
-          <button onclick="viewFilm('${film.id}')">View</button>
-          <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="editFilm('${film.id}')">Edit</button>
-          <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="deleteFilm('${film.id}')">Delete</button>
-        </td>
-      </tr>
-    `;
+<tr style="${isImdb ? "border:2px solid gold;" : ""}">
+  <td>${film.title}</td>
+  <td>${film.genre}</td>
+  <td>${film.releaseDate}</td>
+  <td>${film.imdbRating ? film.imdbRating : "—"}</td>
+  <td>${director ? director.name : "IMDb"}</td>
+  <td>
+    ${isImdb
+        ? `<button onclick="alert('IMDb Movie — Admin must save it')">IMDb</button>`
+        : `
+            <button onclick="viewFilm('${film.id}')">View</button>
+            <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="editFilm('${film.id}')">Edit</button>
+            <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="deleteFilm('${film.id}')">Delete</button>
+          `
+    }
+  </td>
+</tr>
+`;
+
     });
 }
 
-/* ---- Add / Update Film ---- */
+// Add / Update Film 
 filmForm.addEventListener("submit", e => {
     e.preventDefault();
 
@@ -224,7 +252,7 @@ filmForm.addEventListener("submit", e => {
         id: filmIdInput.value || Date.now().toString(),
         title: document.getElementById("title").value,
         genre: document.getElementById("genre").value,
-        releaseDate: document.getElementById("releaseDate").value, // year only
+        releaseDate: document.getElementById("releaseDate").value, 
         rating: Number(ratingInput.value) || 0,
         directorId: filmDirectorSelect.value || null
     };
@@ -239,9 +267,13 @@ filmForm.addEventListener("submit", e => {
 
     ratingStars.forEach(s => s.classList.remove("active"));
 
+    (async () => {
+    await enrichFilmsFromOMDb();
     renderFilms();
     renderDirectors();
     renderDashboard();
+})();
+
 });
 
 /* ---- Edit Film ---- */
@@ -259,6 +291,8 @@ function editFilm(id) {
     ratingStars.forEach(s =>
         s.classList.toggle("active", s.getAttribute("data-value") <= film.rating)
     );
+    setTimeout(enrichFilmsFromOMDb, 500);
+
 }
 
 /* ---- Delete Film ---- */
@@ -312,11 +346,11 @@ filmSort.addEventListener("change", () => {
     }
 
     renderFilms(sorted);
-});
+}); 
 
-/* =========================
-   MODULE 2 — DIRECTORS
-========================= */
+
+   //MODULE 2 — DIRECTORS
+
 const directorForm = document.getElementById("director-form");
 const directorsList = document.getElementById("directors-list");
 
@@ -393,58 +427,6 @@ function deleteDirector(id) {
     }
 }
 
-/* =========================
-   MODULE 3 — ACTORS
-========================= */
-const actorForm = document.getElementById("actor-form");
-const actorsList = document.getElementById("actors-list");
-
-function renderActors() {
-    actorsList.innerHTML = "";
-    actors.forEach(a => {
-        actorsList.innerHTML += `
-            <div class="user-card">
-                <strong>${a.name}</strong> (${a.dob})
-                <p>${a.bio}</p>
-                <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="editActor('${a.id}')">Edit</button>
-                <button class="admin-only ${currentUser?.role !== 'admin' ? 'hidden' : ''}" onclick="deleteActor('${a.id}')">Delete</button>
-            </div>
-        `;
-    });
-}
-
-actorForm.addEventListener("submit", e => {
-    e.preventDefault();
-    const id = document.getElementById("actor-id").value || Date.now().toString();
-    const actor = {
-        id,
-        name: document.getElementById("actor-name").value,
-        bio: document.getElementById("actor-bio").value,
-        dob: document.getElementById("actor-dob").value
-    };
-    actors = actors.filter(a => a.id !== id);
-    actors.push(actor);
-    setData("actors", actors);
-    actorForm.reset();
-    document.getElementById("actor-id").value = "";
-    renderActors();
-});
-
-function editActor(id) {
-    const a = actors.find(x => x.id === id);
-    document.getElementById("actor-id").value = a.id;
-    document.getElementById("actor-name").value = a.name;
-    document.getElementById("actor-bio").value = a.bio;
-    document.getElementById("actor-dob").value = a.dob;
-}
-
-function deleteActor(id) {
-    if (confirm("Delete actor?")) {
-        actors = actors.filter(a => a.id !== id);
-        setData("actors", actors);
-        renderActors();
-    }
-}
 
 /* =========================
    MODULE 4 — CINEMAS
@@ -469,6 +451,7 @@ function renderCinemas() {
 cinemaForm.addEventListener("submit", e => {
     e.preventDefault();
     const id = document.getElementById("cinema-id").value || Date.now().toString();
+    
     const cinema = {
         id,
         name: document.getElementById("cinema-name").value,
@@ -589,17 +572,47 @@ const userSearchForm = document.getElementById("user-film-search-form");
 const userSearchInput = document.getElementById("user-search-input");
 
 if (userSearchForm) {
-    userSearchForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const keyword = userSearchInput.value.toLowerCase();
+    userSearchForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const keyword = userSearchInput.value.trim().toLowerCase();
 
-        const filtered = films.filter(f =>
-            f.title.toLowerCase().includes(keyword) ||
-            f.genre.toLowerCase().includes(keyword)
-        );
+    // 1. Search locally first
+    const localMatches = films.filter(f =>
+        f.title.toLowerCase().includes(keyword)
+    );
 
-        renderFilms(filtered);
-    });
+    if (localMatches.length > 0) {
+        renderFilms(localMatches);
+        return;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:3000/omdb?t=${encodeURIComponent(keyword)}`);
+        const data = await res.json();
+
+        if (data.Response === "True") {
+            const imdbFilm = {
+                id: "imdb-" + data.imdbID,
+                title: data.Title,
+                genre: data.Genre.split(",")[0],
+                releaseDate: data.Year,
+                rating: Math.round(parseFloat(data.imdbRating) / 2), 
+                imdbRating: parseFloat(data.imdbRating),
+                directorId: null,
+                poster: data.Poster,
+                imdbOnly: true
+            };
+
+            renderFilms([imdbFilm]);
+        } else {
+            alert("Movie not found in CineTech or IMDb");
+        }
+    } catch (err) {
+        alert("IMDb lookup failed");
+        console.error(err);
+    }
+});
+
 }
 
 /* ---- User Search Cinemas ---- */
@@ -640,15 +653,26 @@ function renderDashboard() {
     const kpiGrid = document.getElementById("kpi-grid");
     if (!kpiGrid) return;
 
+
     kpiGrid.innerHTML = "";
+
+    // Compute API-based stats
+   const ratedFilms = films.filter(f => typeof f.imdbRating === "number" && !isNaN(f.imdbRating));
+
+    const avgRating = ratedFilms.length
+        ? (ratedFilms.reduce((s, f) => s + f.imdbRating, 0) / ratedFilms.length).toFixed(1)
+        : "0";
+
+    const bestFilm = ratedFilms.sort((a, b) => b.imdbRating - a.imdbRating)[0];
 
     if (currentUser.role === "admin") {
         const stats = [
             { label: "Total Films", value: films.length, icon: "🎬" },
             { label: "Directors", value: directors.length, icon: "🎥" },
-            { label: "Actors", value: actors.length, icon: "👥" },
             { label: "Cinemas", value: cinemas.length, icon: "🏛️" },
-            { label: "Total Bookings", value: bookings.length, icon: "🎫" }
+            { label: "Total Bookings", value: bookings.length, icon: "🎫" },
+            { label: "Avg IMDb Rating", value: avgRating, icon: "⭐" },
+            { label: "Top Movie", value: bestFilm ? bestFilm.title : "N/A", icon: "🏆" }
         ];
         stats.forEach(s => addKpiCard(kpiGrid, s));
     } else {
@@ -656,10 +680,44 @@ function renderDashboard() {
         const stats = [
             { label: "My Bookings", value: userBookings.length, icon: "🎫" },
             { label: "Available Movies", value: films.length, icon: "🎬" },
-            { label: "Cinemas Ready", value: cinemas.length, icon: "🏛️" }
+            { label: "Avg IMDb", value: avgRating, icon: "⭐" }
         ];
         stats.forEach(s => addKpiCard(kpiGrid, s));
     }
+
+    // Update Chart
+    renderRatingsChart();
+}
+let ratingsChart;
+
+function renderRatingsChart() {
+    const ctx = document.getElementById("ratingsChart");
+    if (!ctx) return;
+
+    const labels = films.map(f => f.title);
+    const data = films.map(f => f.imdbRating || 0);
+
+    if (ratingsChart) ratingsChart.destroy();
+
+    ratingsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "IMDb Rating",
+                data,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10
+                }
+            }
+        }
+    });
 }
 
 function addKpiCard(container, stat) {
@@ -714,14 +772,15 @@ function initAutocompletes() {
         return Array.from(s);
     });
 }
-
 initAutocompletes();
-renderFilmDirectorOptions();
-renderFilms();
-renderDirectors();
-renderActors();
-renderCinemas();
-renderBookings();
-renderBookingOptions();
-renderDashboard();
-checkAuth();
+(async () => {
+    await enrichFilmsFromOMDb();
+    renderFilmDirectorOptions();
+    renderFilms();
+    renderDirectors();
+    renderCinemas();
+    renderBookings();
+    renderBookingOptions();
+    checkAuth(); 
+    renderDashboard(); 
+})();
